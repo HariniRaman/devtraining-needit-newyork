@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($window,$scope, cabrillo, $rootScope, spUtil, $interval, spModal) {
+	var c = this;
+	$("#cars").change(function() {
+		if($('#cars :selected').text() === 'Audi') $('#vehicle1').prop('checked', true);
+		if($('#cars :selected').text() === 'Saab') $('#vehicle2').prop('checked', true);
+		if($('#cars :selected').text() === 'Mercedes') $('#vehicle3').prop('checked', true);
+	});
+	c.mapBeds = function(){
+		//spModal.alert('button /is clicked');
+		c.server.update().then(function(r){
+			spUtil.update($scope);
+			if(r.message != ''){
+				//alert(r.message);
+			}
+			c.loadingData = false;
+			$window.location.replace(r.link);
+			//cabrillo.navigation.goto(r.link, null);
+			//$window.location.reload();
+		});
+	}
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>img{
+	'height':50px;
+  'width':100px;
+}</css>
+        <data_table>sp_instance</data_table>
+        <demo_data>{
+	"data": {
+		"sometext": "world"
+	}
+}</demo_data>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>true</has_preview>
+        <id>start</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {
+  
+}]]></link>
+        <name>Start</name>
+        <option_schema/>
+        <public>true</public>
+        <roles/>
+        <script><![CDATA[(function(){
+	var allTasksSysId = "7243259d2f5510100645d5f62799b67b";
+	var deepLinkGenerator = new global.MobileDeepLinkGenerator("agent");
+	data.link = deepLinkGenerator.getScreenLink(allTasksSysId);
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2020-06-10 08:25:59</sys_created_on>
+        <sys_id>bd9d12712f5590100645d5f62799b606</sys_id>
+        <sys_mod_count>96</sys_mod_count>
+        <sys_name>Start</sys_name>
+        <sys_package display_value="NeedIt" source="x_58872_needit">6ead8e780f603200cd674f8ce1050ed1</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="NeedIt">6ead8e780f603200cd674f8ce1050ed1</sys_scope>
+        <sys_update_name>sp_widget_bd9d12712f5590100645d5f62799b606</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2020-06-24 11:09:38</sys_updated_on>
+        <template><![CDATA[<div ng-app="">
+  <form>
+    First Name: <input type="text" class="" ng-model="firstname">
+    <br>
+    <label id="dropdown" for="cars">Choose a car:</label>
+    <select name="cars" id="cars">
+      <option value="volvo">Volvo</option>
+      <option value="saab">Saab</option>
+      <option value="mercedes">Mercedes</option>
+      <option value="audi">Audi</option>
+    </select>
+    <br>
+    <input type="checkbox" id="vehicle1" name="vehicle1" value="Bike1">
+    <label for="vehicle1">Bike1</label><br>
+    <input type="checkbox" id="vehicle2" name="vehicle2" value="Car1">
+    <label for="vehicle2">Car1</label><br>
+    <input type="checkbox" id="vehicle3" name="vehicle3" value="Bike2">
+    <label for="vehicle3">Bike2</label><br>
+    <input type="checkbox" id="vehicle4" name="vehicle4" value="Car2">
+    <label for="vehicle1">Car2</label><br>
+    <input type="checkbox" id="vehicle5" name="vehicle5" value="Bike3">
+    <label for="vehicle2">Bike3</label><br>
+    <input type="checkbox" id="vehicle6" name="vehicle6" value="Car3">
+    <label for="vehicle3">Car3</label><br><br>
+    <br>
+    <button>Save</button>
+    <button ng-click="c.mapBeds()"> Back</button>
+  </form>
+  <h1>You entered: {{firstname}}</h1>
+</div>
+]]></template>
+    </sp_widget>
+</record_update>

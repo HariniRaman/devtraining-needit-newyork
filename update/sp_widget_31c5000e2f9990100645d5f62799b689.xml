@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($window,$scope, cabrillo, $rootScope, spUtil, $interval) {
+	/* widget controller */
+	var c = this;
+	c.server.refresh();
+	c.loadingData = false;
+	c.mappedBeds = c.data.beds;
+	//c.selectedTeam = c.data.teams[0].name;
+	c.teamSelect = false;
+	
+	$rootScope.$on('teamSelect', function(event){
+		c.teamSelect = true;
+		spUtil.update($scope);
+		c.data.action = "loadDefault";
+		c.server.update();
+		c.allSelected = true;
+
+	});
+	
+	// re-hide bed and team selection when changing shift
+	$rootScope.$on('teamHide', function(event){
+		c.teamSelect = false;
+	});
+
+
+	c.teamChange = function(){
+		c.clearAll();
+		if(c.selectedTeam){
+			c.data.selectedTeam = c.selectedTeam;
+			c.data.action = "loadBed";
+			c.data.mapBeds = c.data.beds;
+			c.loadingData = true;
+			c.server.update().then(function(r) {
+				$scope.loadingData = false;
+			});
+		}
+		else
+			c.clearAll();
+	};
+
+	c.selectAll = function(){
+		if(c.allSelected){
+			angular.forEach($scope.data.beds, function(bed){
+				bed.mapped = true;
+			})
+		}
+		else
+			c.clearAll();
+	};
+
+	c.clearAll = function(){
+		c.allSelected = false;
+		angular.forEach($scope.data.beds, function(bed){
+			bed.mapped = false;
+		})
+	};
+
+	c.toggleThis = function(){
+		if(c.allSelected){
+			c.allSelected = false;
+		}
+	};
+	c.mapChange = function(mapped){
+		if(!mapped){
+			c.allSelected = false;
+		}
+	};
+
+	c.loadBeds = function(){
+		c.data.load = true;
+		c.server.update().then(function(r){});
+	};
+
+
+	c.mapBeds = function(){
+		alert('hi');
+
+		var landingUrl = $window.location.host + "/pm/NeedIt";
+		$window.open(landingUrl, "_self");
+		var checkedBeds = c.data.beds.filter(function(x){ return x.mapped?true:false;})	
+		//Selected team as the default
+		if(!c.selectedTeam){
+			alert("You have not selected any team.");
+		}
+		//Nurse without any beds.
+		else if(c.data.ward_admin == false && checkedBeds <=0 ){
+			alert("You have not selected any beds. You must select at least one bed to continue.");
+		}
+		
+		else if(c.data.ward_admin == false && c.selectedTeam == "No Team"){
+			alert("You have not selected any team.");
+		}
+		//A bed is selected or num is trying to proceed without any beds
+		else if((checkedBeds.length > 0) || (c.data.ward_admin ))
+		{	
+			c.loadingData = true;
+			c.data.selectedTeam = c.selectedTeam;
+			c.data.save = true;
+			c.data.name = c.newName;
+			c.data.checkedBeds = checkedBeds;
+			c.server.update().then(function(r){
+				spUtil.update($scope);
+				if(r.message != ''){
+					alert(r.message);
+				}
+				c.loadingData = false;
+			});
+			$window.location.reload();
+
+		}
+	};
+
+	
+/* currently unused in the Agent app
+	function loginNow(){
+		//cabrillo.navigation.goto("/assist?id=dahome",null);
+		//cabrillo.navigation.goto("/nav_to.do?/target=_blank",null);
+		//cabrillo.navigation.goto("/mobile_home.do")
+		cabrillo.navigation.goBack();
+	}
+
+	function redirectNow(){
+		//cabrillo.navigation.goto("/home",null);
+		cabrillo.navigation.goBack();
+	}
+
+	function logoutNow(){
+		//cabrillo.navigation.goto("/logout.do", null);
+
+		cabrillo.navigation.goto("/nav_to.do?uri=%2F$m.do%3Fsysparm_m_redirect%3Dtrue%23%2Fhome",null);
+		//cabrillo.navigation.goBack();
+	}
+*/
+
+
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>h1 {
+color: pink;
+}
+</css>
+        <data_table>sp_instance</data_table>
+        <demo_data>{
+	"data": {
+		"sometext": "world"
+	}
+}</demo_data>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>true</has_preview>
+        <id>demo</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>demo</name>
+        <option_schema/>
+        <public>true</public>
+        <roles/>
+        <script><![CDATA[(function() {
+	/* populate the 'data' object */
+	/* e.g., data.table = $sp.getValue('table'); */
+	//data.team = $sp.getRecord("sys_user_group", options.team);
+	data.rec_id = '';
+	var teamAPI = new dasTeamAPI();
+	var bedUser = gs.getUserID();
+
+	if(input && input.action == "loadDefault"){		
+		//data.title = options.team.name;
+		data.teams = [];
+		data.beds = [];
+		data.team_filter = gs.getProperty("x_dttm_d_assist.team_filter");
+		data.selectedTeam = {};
+		data.map_to = "user";
+		data.ward_admin = false;
+		var loggedUser = gs.getUserID();
+		var gr_logged = new GlideRecord('x_dttm_d_assist_my_hospital'); 
+		gr_logged.addQuery('user',loggedUser);
+		gr_logged.addQuery('active', true);
+		gr_logged.addQuery('shift_supervisor',true);
+		gr_logged.orderByDesc('sys_created');
+		gr_logged.query();
+		if(gr_logged.next()){
+			data.ward_admin = true;
+		}
+		else{
+			data.ward_admin = gs.hasRole('x_dttm_d_assist.num');
+		}
+
+		var DAS = new dassistLibrary();
+		data.staffLogin = gs.getUserID();
+
+		//data.domain = DAS.getDomain('sys_user', gs.getUserID());
+		data.location = DAS.getLocation(gs.getUserID());
+		data.teams = [];
+		data.beds = [];
+		data.team_filter = gs.getProperty("x_dttm_d_assist.team_filter");
+		data.map_to = options.map_to || "team";
+		
+		var blankObj = {};
+		blankObj.description = 'No Team';
+		blankObj.sys_id = '';
+		
+
+		var teamGR = new GlideRecord('sys_user_group');
+		teamGR.addQuery(data.team_filter);
+		teamGR.addQuery('u_ward',data.location);
+		teamGR.orderBy('description');
+		teamGR.query();
+		
+		var grp_list;
+		var passObj;
+
+		while(teamGR.next()){
+			var teamObj = {};
+			$sp.getRecordDisplayValues(teamObj, teamGR, 'description,sys_id');
+			data.teams.push(teamObj);
+		}
+		
+		// teams moved to the bottom for DAS-2796
+		data.teams.push(blankObj);
+
+		var bedGR = new GlideRecord('x_dttm_d_assist_hospital_bed');
+		bedGR.addQuery("location",data.location);
+		bedGR.orderBy("name");
+		bedGR.query();
+		while(bedGR.next()){
+			var bedNum = bedGR.name.split(" ");
+			var bedObj = {};
+			$sp.getRecordDisplayValues(bedObj, bedGR, 'name,sys_id');
+			bedObj.mapped = true;
+			bedObj.number = parseInt(bedNum[1],10);
+			data.beds.push(bedObj);
+		}
+		// removed as it prematurely maps users to all beds
+		//teamAPI.mapBedsToUser(bedUser,data.beds);
+	}
+
+	if(input && input.action == 'loadBed'){
+		for(var i =0; i < input.mapBeds.length; i++){
+			var team_bed = new GlideRecord('x_dttm_d_assist_m2m_hospital_bed_s_groups');
+			team_bed.addQuery('hospital_bed', input.mapBeds[i].sys_id);
+			team_bed.addQuery('group',input.selectedTeam.sys_id);
+			team_bed.query();
+			if(team_bed.next()){
+				input.mapBeds[i].mapped = true;
+			}
+			else
+				input.mapBeds[i].mapped = false;
+		}
+		data.beds = input.mapBeds;
+	}
+
+	if(input && input.save){
+		data.message = '';
+		teamAPI.mapBedsToUser(bedUser,input.checkedBeds);
+		if(input.selectedTeam.description != '' && input.selectedTeam.description != 'No Team'){
+			teamAPI.mapUserToTeam(bedUser, input.selectedTeam.sys_id);
+		}
+	}
+}
+)();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2020-06-10 16:01:11</sys_created_on>
+        <sys_id>31c5000e2f9990100645d5f62799b689</sys_id>
+        <sys_mod_count>30</sys_mod_count>
+        <sys_name>demo</sys_name>
+        <sys_package display_value="NeedIt" source="x_58872_needit">6ead8e780f603200cd674f8ce1050ed1</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="NeedIt">6ead8e780f603200cd674f8ce1050ed1</sys_scope>
+        <sys_update_name>sp_widget_31c5000e2f9990100645d5f62799b689</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2020-06-12 10:56:56</sys_updated_on>
+        <template><![CDATA[<button class="btn btn-primary btn-block" ng-click="c.mapBeds()">
+  ${Confirm Team & Bed Selection}
+</button>
+]]></template>
+    </sp_widget>
+</record_update>

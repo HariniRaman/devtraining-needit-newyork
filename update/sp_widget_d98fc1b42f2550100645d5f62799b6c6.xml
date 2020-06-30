@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($window,$scope, cabrillo, $rootScope, spUtil, $interval) {
+	/* widget controller */
+	alert(JSON.stringify(this, null, 4));
+	var c = this;
+	c.server.refresh();
+	c.loadingData = false;
+	//c.mappedBeds = c.data.beds;
+	var fromSessions = sessionStorage.getItem('bed 03');
+	alert('session is ' + 'bed 03' + fromSessions);
+	//	c.selectedTeam = c.data.teams[0].name;
+	c.teamSelect = false;
+	//alert(data.beds);
+	
+	
+	// and fire it after definition
+	angular.forEach($scope.data.beds, function(bed){
+		alert('onload');
+		alert(this.data);
+		var bedSession = sessionStorage.getItem(bed);
+		bed.status = bedSession;
+		alert(bed.name);
+		alert(bed.status);
+	});
+	$rootScope.$on('teamSelect', function(event){
+		alert('11')
+		alert(JSON.stringify(this.data));
+		c.teamSelect = true;
+		spUtil.update($scope);
+		c.data.action = "loadDefault";
+		c.server.update();
+		// unselect selectall checkbox by default.
+		//c.allSelected = true;
+
+	});
+	$scope.previousPage = function(){
+		//alert('back button clicked');
+		alert(this.data);
+		window.history.back();
+	}
+
+	// re-hide bed and team selection when changing shift
+	$rootScope.$on('teamHide', function(event){
+		alert('i am loading');alert(this.data);
+		c.teamSelect = false;
+	});
+	
+	c.myFunction = function(){
+		alert(JSON.stringify(this.data));
+		angular.forEach($scope.data.beds, function(bed){
+			var fromSessions = sessionStorage.getItem(bed);
+			alert('session is ' + bed + fromSessions);
+		});
+	}
+	
+	c.mapBeds = function(){
+		var beds = [];
+		//spModal.alert('button /is clicked');
+		angular.forEach($scope.data.beds, function(bed){
+			if(bed.mapped){
+				alert(bed.name);
+				beds = bed.name;
+				sessionStorage.setItem(bed.name, true);
+			}else{
+				sessionStorage.setItem(bed.name, false);
+			}
+		})
+		alert(beds);
+		c.server.update().then(function(r){
+			spUtil.update($scope);
+			if(r.message != ''){
+				//alert(r.message);
+			}
+			//c.loadingData = false;
+			//$event.preventDefault();
+			$window.location.replace(r.link);
+			//cabrillo.navigation.goto(r.link, null);
+			//$window.location.reload();
+		});
+	}
+	c.teamChange = function(){
+		c.clearAll();
+		alert('find data')
+		alert(c.selectedTeam);
+		if(c.selectedTeam){
+			//alert($('#team_select').hasClass('ng-touched'));
+			c.data.selectedTeam = c.selectedTeam;
+			c.data.action = "loadBed";
+			c.data.mapBeds = c.data.beds;
+			c.loadingData = true;
+			c.server.update().then(function(r) {
+				$scope.loadingData = false;
+			});
+		}
+		else
+			c.clearAll();
+	};
+
+	c.selectAll = function(){
+		alert('12121');
+		alert(this.data);
+		if(c.allSelected){
+			angular.forEach($scope.data.beds, function(bed){
+				bed.mapped = true;
+			})
+		}
+		else
+			c.clearAll();
+	};
+
+	c.clearAll = function(){
+		alert(JSON.stringify(this.data));
+		alert('toggle');
+		c.allSelected = false;
+		angular.forEach($scope.data.beds, function(bed){
+			bed.mapped = false;
+		})
+	};
+
+	c.toggleThis = function(){
+		alert(JSON.stringify(this.data));
+		alert('toggle');
+		if(c.allSelected){
+			c.allSelected = false;
+		}
+	};
+	c.mapChange = function(mapped){
+		alert(this.data);
+		alert('map change');
+		if(!mapped){
+			c.allSelected = false;
+		}
+	};
+
+	c.loadBeds = function(){
+		alert(JSON.stringify(this.data));
+		alert('find data beds load');
+		c.data.load = true;
+		c.server.update().then(function(r){});
+	};
+
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css>h1 {
+color: #428bca;
+}</css>
+        <data_table>sp_instance</data_table>
+        <demo_data>{
+	"data": {
+		"sometext": "world"
+	}
+}</demo_data>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>true</has_preview>
+        <id>clonedstartshift</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>clonedStartShift</name>
+        <option_schema/>
+        <public>true</public>
+        <roles/>
+        <script><![CDATA[(function() {
+	/* populate the 'data' object */
+	/* e.g., data.table = $sp.getValue('table'); */
+	data.beds = [
+		{'name':'bed 01'},
+		{'name':'bed 02'},
+		{'name':'bed 03'},
+		{'name':'bed 04'},
+		{'name':'bed 05'},
+		{'name':'bed 06'},
+		{'name':'bed 07'},
+		{'name':'bed 08'}
+	];
+//	data.checkedBed = beds;
+	data.teams = [ 
+		{'description':'east ward'},
+		{'description':'west ward'}
+	];
+	data.selectedTeam = {}
+	//var allTasksSysId = "7243259d2f5510100645d5f62799b67b";
+	//var deepLinkGenerator = new global.MobileDeepLinkGenerator("agent");
+	//data.link = deepLinkGenerator.getScreenLink(allTasksSysId);
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>admin</sys_created_by>
+        <sys_created_on>2020-06-19 10:26:40</sys_created_on>
+        <sys_id>d98fc1b42f2550100645d5f62799b6c6</sys_id>
+        <sys_mod_count>99</sys_mod_count>
+        <sys_name>clonedStartShift</sys_name>
+        <sys_package display_value="NeedIt" source="x_58872_needit">6ead8e780f603200cd674f8ce1050ed1</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="NeedIt">6ead8e780f603200cd674f8ce1050ed1</sys_scope>
+        <sys_update_name>sp_widget_d98fc1b42f2550100645d5f62799b6c6</sys_update_name>
+        <sys_updated_by>admin</sys_updated_by>
+        <sys_updated_on>2020-06-28 15:09:50</sys_updated_on>
+        <template><![CDATA[<body ng-app="pageLoadApp" ng-controller="pageLoadAppCtrl">
+  <div ng-init="c.myFunction()">
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-gap">
+          <!-- <a href="javascript:void(0)" class="back-btn" ng-click="previousPage()">Back</a> -->
+          <button class="btn btn-primary btn-block" ng-click="c.mapBeds()">
+            ${Confirm Team & Bed Selection}
+          </button>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="row">
+          <div class="col-sm-4">
+            <div class="row">
+              <select id="team_select" class="form-control form-block" ng-change="c.teamChange()" ng-options="team.description for team in data.teams" ng-model="c.selectedTeam">
+                <option value='' disabled selected>Select your team</option>
+              </select>
+            </div>
+          </div>
+          <div class="col-sm-8 panel-gap" >
+            <div class="row">
+              <div class="alert alert-success"  ng-if="loadingData">
+                <fa name="spinner" spin="true"></fa> ${Loading data}...
+              </div>
+            </div>
+            <div class="list-group" ng-if="!loadingData ">
+              <div>
+                <label class="container" ng-click="c.selectAll()">
+                  ${Select All}
+                  <input type="checkbox" ng-model="c.allSelected" ng-checked="isSelected(e.id)">
+                  <span class="checkmark"></span>
+                </label>
+              </div>
+            </div>
+            <div class="row" ng-if="!loadingData">
+              <div class="col-xs-6">
+                <ul class="list-group">
+                  <li class="list-group-item no-border" ng-repeat="bed in data.beds | orderBy: 'number' "  ng-if="$even">
+                    <label class="container" ng-click="c.mapChange(bed.mapped)">
+                      <div ng-class="{'text-primary': bed.mapped}">
+                        {{bed.name}}
+                      </div>
+                      <input type="checkbox" ng-model="bed.mapped" ng-checked={{bed.status}}>
+                      <span class="checkmark"></span>
+                    </label>
+                  </li>
+                </ul>
+              </div>
+              <div class="col-xs-6">
+                <ul class="list-group">
+                  <li class="list-group-item no-border" ng-repeat="bed in data.beds | orderBy: 'number'" ng-if="$odd">
+                    <label class="container" ng-click="c.mapChange(bed.mapped)">
+                      <div ng-class="{'text-primary': bed.mapped}">
+                        {{bed.name}}
+                      </div>
+                      <input type="checkbox" ng-model="bed.mapped"  ng-checked={{bed.status}} ng-change="c.toggleThis">
+                      <span class="checkmark"></span>
+                    </label>
+                  </li>
+                </ul>
+              </div>
+            </div>
+            <!--
+<div class="row">
+
+<button class="btn btn-warning" ng-click="c.clearAll()">
+${Clear}
+</button>
+</div>-->
+          </div>
+        </div>
+      </div>
+    </div></div></body>
+<!-- <div class="panel-footer">
+
+<h5>
+Note: If you don't select a team, you will automatically be assigned to all beds.
+</h5>
+<button class="btn btn-primary btn-block" ng-click="c.mapBeds()">
+${Confirm Team & Bed Selection}
+</button>
+</div> -->
+]]></template>
+    </sp_widget>
+</record_update>
